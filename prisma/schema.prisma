@@ -1,0 +1,230 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String   @id @default(cuid())
+  email           String   @unique
+  name            String?
+  avatar          String?
+  firebaseUid     String?  @unique
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  // Relations
+  accounts        Account[]
+  trades          Trade[]
+  portfolios      Portfolio[]
+  strategies      Strategy[]
+  notes           Note[]
+  reports         Report[]
+  
+  @@map("users")
+}
+
+model Account {
+  id              String   @id @default(cuid())
+  name            String
+  broker          String
+  accountType     String   // "cash", "margin", "retirement", etc.
+  currency        String   @default("USD")
+  initialBalance  Float
+  currentBalance  Float
+  isActive        Boolean  @default(true)
+  userId          String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  // Relations
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  trades          Trade[]
+  portfolios      Portfolio[]
+  
+  @@map("accounts")
+}
+
+model Trade {
+  id                  String      @id @default(cuid())
+  symbol              String
+  assetClass          String      // "stock", "forex", "crypto", "options", "futures"
+  direction           String      // "buy", "sell"
+  quantity            Float
+  entryPrice          Float
+  exitPrice           Float?
+  entryDate           DateTime
+  exitDate            DateTime?
+  status              String      @default("open") // "open", "closed", "partial"
+  entryReason         String?     // "fundamental", "technical", "news_driven", "other"
+  exitReason          String?
+  notes               String?
+  commission          Float       @default(0)
+  slippage            Float       @default(0)
+  tags                String?     // JSON string for tags array
+  screenshotUrl       String?
+  accountId           String
+  userId              String
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
+  
+  // Calculated fields
+  unrealizedPnl       Float?
+  realizedPnl         Float?
+  duration            String?     // Trade duration in days/hours
+  
+  // Relations
+  user                User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  account             Account     @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  portfolioTrades     PortfolioTrade[]
+  strategy            Strategy?   @relation(fields: [strategyId], references: [id])
+  strategyId          String?
+  tradeNotes          Note[]
+  
+  @@map("trades")
+}
+
+model Portfolio {
+  id              String   @id @default(cuid())
+  name            String
+  description     String?
+  initialValue    Float
+  currentValue    Float
+  targetReturn    Float?
+  maxDrawdown     Float?
+  isActive        Boolean  @default(true)
+  userId          String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  // Relations
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  account         Account? @relation(fields: [accountId], references: [id])
+  accountId       String?
+  trades          PortfolioTrade[]
+  
+  @@map("portfolios")
+}
+
+model PortfolioTrade {
+  id          String @id @default(cuid())
+  portfolioId String
+  tradeId     String
+  weight      Float  // Position weight in portfolio
+  createdAt   DateTime @default(now())
+  
+  // Relations
+  portfolio   Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+  trade       Trade     @relation(fields: [tradeId], references: [id], onDelete: Cascade)
+  
+  @@unique([portfolioId, tradeId])
+  @@map("portfolio_trades")
+}
+
+model Strategy {
+  id              String   @id @default(cuid())
+  name            String
+  description     String?
+  type            String   // "trend_following", "mean_reversion", "breakout", etc.
+  assetClass      String
+  timeframe       String   // "1m", "5m", "1h", "1d", etc.
+  isActive        Boolean  @default(true)
+  parameters      Json?    // Strategy parameters
+  userId          String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  // Performance metrics
+  totalTrades     Int      @default(0)
+  winRate         Float?
+  avgWin          Float?
+  avgLoss         Float?
+  profitFactor    Float?
+  sharpeRatio     Float?
+  maxDrawdown     Float?
+  
+  // Relations
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  trades          Trade[]
+  notes           Note[]
+  
+  @@map("strategies")
+}
+
+model Note {
+  id          String   @id @default(cuid())
+  title       String
+  content     String
+  type        String   // "trade", "strategy", "market", "general"
+  tags        String?    // JSON string for tags array
+  isPublic    Boolean  @default(false)
+  userId      String
+  tradeId     String?
+  strategyId  String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  trade       Trade?    @relation(fields: [tradeId], references: [id])
+  strategy    Strategy? @relation(fields: [strategyId], references: [id])
+  
+  @@map("notes")
+}
+
+model Report {
+  id          String   @id @default(cuid())
+  name        String
+  type        String   // "performance", "tax", "risk", "custom"
+  period      String   // "daily", "weekly", "monthly", "quarterly", "yearly"
+  data        Json     // Report data
+  isGenerated Boolean  @default(false)
+  userId      String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("reports")
+}
+
+model MarketData {
+  id          String   @id @default(cuid())
+  symbol      String
+  timestamp   DateTime
+  open        Float
+  high        Float
+  low         Float
+  close       Float
+  volume      Float?
+  assetClass  String
+  createdAt   DateTime @default(now())
+  
+  @@unique([symbol, timestamp])
+  @@map("market_data")
+}
+
+model EconomicEvent {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  country     String
+  impact      String   // "low", "medium", "high"
+  eventDate   DateTime
+  actual      Float?
+  forecast    Float?
+  previous    Float?
+  createdAt   DateTime @default(now())
+  
+  @@map("economic_events")
+}
