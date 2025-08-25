@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { Eye, EyeOff, Mail, Lock, Chrome } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { ThemeToggle } from "@/components/theme-toggle"
-import { signInWithGoogle, signInWithEmail, signUpWithEmail } from "@/lib/firebase"
+import { signInWithGoogle, signInWithEmail, signUpWithEmail, handleGoogleRedirect } from "@/lib/firebase"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 
@@ -18,8 +18,24 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true) // Start in loading state to handle redirect
   const router = useRouter()
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const user = await handleGoogleRedirect();
+        if (user) {
+          toast.success("Successfully logged in with Google!");
+          router.push("/dashboard");
+        }
+      } catch (error: any) {
+        toast.error(error.message || "Google sign-in failed");
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -42,17 +58,15 @@ export default function LoginPage() {
   }
 
   const handleGoogleSignIn = async () => {
-    setLoading(true)
+    setLoading(true);
     try {
-      await signInWithGoogle()
-      toast.success("Successfully logged in with Google!")
-      router.push("/dashboard")
+      await signInWithGoogle();
+      // The redirect will be handled by the useEffect hook after Google redirects back to this page.
     } catch (error: any) {
-      toast.error(error.message || "Google sign-in failed")
-    } finally {
-      setLoading(false)
+      toast.error(error.message || "Google sign-in failed");
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 flex items-center justify-center p-4">

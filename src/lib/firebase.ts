@@ -66,3 +66,23 @@ export const logoutUser = async () => {
   }
   await signOut(auth);
 };
+
+export const handleGoogleRedirect = async () => {
+  const result = await getRedirectResult(auth);
+  if (result?.user) {
+    const token = await result.user.getIdToken();
+
+    const response = await fetch('/api/auth/session', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to create server session.');
+    }
+
+    return result.user;
+  }
+  return null;
+};
