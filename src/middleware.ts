@@ -6,9 +6,13 @@ export function middleware(request: NextRequest) {
   const token = request.cookies.get('firebaseIdToken');
   const { pathname } = request.nextUrl;
 
-  // If the user is trying to access the dashboard without a token, redirect to login
-  if (!token && pathname.startsWith('/dashboard')) {
+  const protectedRoutes = ['/dashboard', '/portfolio', '/trades', '/analytics'];
+  const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route));
+
+  // If the user is trying to access a protected route without a token, redirect to login
+  if (!token && isProtectedRoute) {
     const loginUrl = new URL('/login', request.url);
+    loginUrl.searchParams.set('redirect_to', pathname);
     return NextResponse.redirect(loginUrl);
   }
 
@@ -21,7 +25,7 @@ export function middleware(request: NextRequest) {
   return NextResponse.next();
 }
 
-// See "Matching Paths" below to learn more
+// Match all protected routes and the login page
 export const config = {
-  matcher: '/dashboard/:path*',
+  matcher: ['/dashboard/:path*', '/portfolio/:path*', '/trades/:path*', '/analytics/:path*', '/login'],
 }
