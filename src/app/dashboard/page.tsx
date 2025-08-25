@@ -33,19 +33,6 @@ export default function Dashboard() {
   const { user, loading } = useAuth()
   const router = useRouter()
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
-      </div>
-    )
-  }
-
-  if (!user) {
-    router.push("/login")
-    return null
-  }
-
   const handleLogout = async () => {
     try {
       await import("@/lib/firebase").then(({ logoutUser }) => logoutUser())
@@ -54,6 +41,14 @@ export default function Dashboard() {
     } catch (error) {
       toast.error("Failed to logout")
     }
+  }
+
+  if (loading || !user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+      </div>
+    )
   }
 
   // Mock data for demonstration

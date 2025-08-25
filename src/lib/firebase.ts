@@ -21,39 +21,46 @@ export const googleProvider = new GoogleAuthProvider()
 // Authentication functions
 export const signInWithGoogle = async () => {
   try {
-    const result = await signInWithPopup(auth, googleProvider)
-    return result.user
+    const result = await signInWithPopup(auth, googleProvider);
+    const token = await result.user.getIdToken();
+    document.cookie = `firebaseIdToken=${token}; path=/`;
+    return result.user;
   } catch (error) {
-    console.error("Error signing in with Google:", error)
-    throw error
+    console.error("Error signing in with Google:", error);
+    throw error;
   }
-}
+};
 
 export const signInWithEmail = async (email: string, password: string) => {
   try {
-    const result = await signInWithEmailAndPassword(auth, email, password)
-    return result.user
+    const result = await signInWithEmailAndPassword(auth, email, password);
+    const token = await result.user.getIdToken();
+    document.cookie = `firebaseIdToken=${token}; path=/`;
+    return result.user;
   } catch (error) {
-    console.error("Error signing in with email:", error)
-    throw error
+    console.error("Error signing in with email:", error);
+    throw error;
   }
-}
+};
 
 export const signUpWithEmail = async (email: string, password: string) => {
   try {
-    const result = await createUserWithEmailAndPassword(auth, email, password)
-    return result.user
+    const result = await createUserWithEmailAndPassword(auth, email, password);
+    const token = await result.user.getIdToken();
+    document.cookie = `firebaseIdToken=${token}; path=/`;
+    return result.user;
   } catch (error) {
-    console.error("Error signing up with email:", error)
-    throw error
+    console.error("Error signing up with email:", error);
+    throw error;
   }
-}
+};
 
 export const logoutUser = async () => {
   try {
-    await signOut(auth)
+    await signOut(auth);
+    document.cookie = "firebaseIdToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
   } catch (error) {
-    console.error("Error signing out:", error)
-    throw error
+    console.error("Error signing out:", error);
+    throw error;
   }
-}
+};
