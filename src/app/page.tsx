@@ -5,7 +5,6 @@ import { ArrowRight, BarChart3, TrendingUp, Shield, Zap, Users } from "lucide-re
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ThemeToggle } from "@/components/theme-toggle"
-import Link from "next/link"
 
 export default function Home() {
   const features = [
@@ -55,12 +54,12 @@ export default function Home() {
           
           <div className="flex items-center space-x-4">
             <ThemeToggle />
-            <Link href="/login">
+            <a href="/login">
               <Button variant="ghost">Sign In</Button>
-            </Link>
-            <Link href="/login">
+            </a>
+            <a href="/login">
               <Button>Get Started</Button>
-            </Link>
+            </a>
           </div>
         </div>
       </nav>
@@ -98,17 +97,17 @@ export default function Home() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.6 }}
             >
-              <Link href="/login">
+              <a href="/login">
                 <Button size="lg" className="text-lg px-8 py-6">
                   Start Free Trial
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
-              </Link>
-              <Link href="/login">
+              </a>
+              <a href="/login">
                 <Button variant="outline" size="lg" className="text-lg px-8 py-6">
                   View Demo
                 </Button>
-              </Link>
+              </a>
             </motion.div>
           </motion.div>
         </div>
@@ -212,12 +211,12 @@ export default function Home() {
             <p className="text-xl text-muted-foreground mb-8">
               Join thousands of professional traders who use ikigai Journal to optimize their performance.
             </p>
-            <Link href="/login">
+            <a href="/login">
               <Button size="lg" className="text-lg px-8 py-6">
                 Start Your Free Trial
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
-            </Link>
+            </a>
           </motion.div>
         </div>
       </section>
