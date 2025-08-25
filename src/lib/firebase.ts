@@ -32,7 +32,7 @@ export const signInWithEmail = async (email: string, password: string) => {
   try {
     const result = await signInWithEmailAndPassword(auth, email, password);
     const token = await result.user.getIdToken();
-    document.cookie = `firebaseIdToken=${token}; path=/`;
+    document.cookie = `firebaseIdToken=${token}; path=/; SameSite=Lax; Secure`;
     return result.user;
   } catch (error) {
     console.error("Error signing in with email:", error);
@@ -44,7 +44,7 @@ export const signUpWithEmail = async (email: string, password: string) => {
   try {
     const result = await createUserWithEmailAndPassword(auth, email, password);
     const token = await result.user.getIdToken();
-    document.cookie = `firebaseIdToken=${token}; path=/`;
+    document.cookie = `firebaseIdToken=${token}; path=/; SameSite=Lax; Secure`;
     return result.user;
   } catch (error) {
     console.error("Error signing up with email:", error);
@@ -55,7 +55,7 @@ export const signUpWithEmail = async (email: string, password: string) => {
 export const logoutUser = async () => {
   try {
     await signOut(auth);
-    document.cookie = "firebaseIdToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+    document.cookie = "firebaseIdToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax; Secure";
   } catch (error) {
     console.error("Error signing out:", error);
     throw error;
