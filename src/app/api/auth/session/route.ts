@@ -1,9 +1,25 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { setCookie, deleteCookie } from 'cookies-next';
+import { getCookie, setCookie, deleteCookie } from 'cookies-next';
 import { authAdmin } from '@/lib/firebase-admin';
 
 const SESSION_COOKIE_NAME = '__session';
+
+// GET handler for verifying a session
+export async function GET(request: NextRequest) {
+  const session = getCookie(SESSION_COOKIE_NAME, { req: request });
+
+  if (!session) {
+    return NextResponse.json({ isAuthenticated: false }, { status: 401 });
+  }
+
+  try {
+    const decodedToken = await authAdmin.verifyIdToken(session);
+    return NextResponse.json({ isAuthenticated: true, user: decodedToken }, { status: 200 });
+  } catch (error) {
+    return NextResponse.json({ isAuthenticated: false }, { status: 401 });
+  }
+}
 const SESSION_DURATION_DAYS = 14;
 
 // POST handler for creating a session (login)
