@@ -25,14 +25,18 @@ export async function GET() {
 
 // POST handler for creating a session (login)
 export async function POST(request: NextRequest) {
+  console.log('POST /api/auth/session hit');
   try {
     const { token } = await request.json();
     if (!token) {
+      console.log('Token not found in request body');
       return NextResponse.json({ error: 'Token is required' }, { status: 400 });
     }
+    console.log('Token received, attempting to verify with Firebase Admin...');
 
     // Verify the ID token.
     await authAdmin.verifyIdToken(token);
+    console.log('Firebase ID token verified successfully.');
 
     // Use Next.js's built-in cookie management
     const cookieStore = cookies();
@@ -43,10 +47,11 @@ export async function POST(request: NextRequest) {
       path: '/',
       sameSite: 'lax',
     });
+    console.log('Session cookie set successfully.');
 
     return NextResponse.json({ status: 'success' });
   } catch (error) {
-    console.error('Error creating session:', error);
+    console.error('!!! CRITICAL ERROR creating session:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
