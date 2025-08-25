@@ -47,11 +47,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           toast.success("Successfully logged in with Google!");
           const token = await result.user.getIdToken();
           // Create the server-side session
-          await fetch('/api/auth/session', {
+          const response = await fetch('/api/auth/session', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ token }),
           });
+
+          if (!response.ok) {
+            throw new Error('Failed to create server session after redirect.');
+          }
+
           // Now that the session is created, verify it to get the user state
           await verifySession();
         } else {
