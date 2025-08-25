@@ -20,23 +20,22 @@ export const googleProvider = new GoogleAuthProvider()
 
 // Authentication functions
 export const signInWithGoogle = async () => {
-  try {
-    await signInWithRedirect(auth, googleProvider);
-  } catch (error) {
-    console.error("Error signing in with Google:", error);
-    throw error;
-  }
+  await signInWithRedirect(auth, googleProvider);
 };
 
 export const signInWithEmail = async (email: string, password: string) => {
   const result = await signInWithEmailAndPassword(auth, email, password);
   const token = await result.user.getIdToken();
 
-  await fetch('/api/auth/session', {
+  const response = await fetch('/api/auth/session', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ token }),
   });
+
+  if (!response.ok) {
+    throw new Error('Failed to create server session.');
+  }
 
   return result.user;
 };
@@ -45,16 +44,25 @@ export const signUpWithEmail = async (email: string, password: string) => {
   const result = await createUserWithEmailAndPassword(auth, email, password);
   const token = await result.user.getIdToken();
 
-  await fetch('/api/auth/session', {
+  const response = await fetch('/api/auth/session', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ token }),
   });
 
+  if (!response.ok) {
+    throw new Error('Failed to create server session.');
+  }
+
   return result.user;
 };
 
 export const logoutUser = async () => {
-  await fetch('/api/auth/session', { method: 'DELETE' });
+  const response = await fetch('/api/auth/session', { method: 'DELETE' });
+  if (!response.ok) {
+    // This is not ideal, as the client might be logged out but the server session might persist.
+    // However, for now, we'll just log it and proceed with client-side logout.
+    console.error('Failed to delete server session.');
+  }
   await signOut(auth);
 };
