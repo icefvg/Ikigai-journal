@@ -9,7 +9,8 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { ThemeToggle } from "@/components/theme-toggle"
-import { signInWithGoogle, signInWithEmail, signUpWithEmail, handleGoogleRedirect } from "@/lib/firebase"
+import { signInWithGoogle, signInWithEmail, signUpWithEmail, handleGoogleRedirect, auth } from "@/lib/firebase"
+import { onAuthStateChanged } from "firebase/auth"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 
@@ -26,8 +27,8 @@ export default function LoginPage() {
       try {
         const user = await handleGoogleRedirect();
         if (user) {
-          toast.success("Successfully logged in with Google!");
-          router.push("/dashboard");
+          toast.success("Successfully processed Google login!");
+          // The onAuthStateChanged listener will handle the redirect.
         }
       } catch (error: any) {
         toast.error(error.message || "Google sign-in failed");
@@ -35,6 +36,20 @@ export default function LoginPage() {
         setLoading(false);
       }
     })();
+  }, []); // router dependency removed
+
+  // Handles redirecting to dashboard if user is already logged in
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        // User is signed in, redirect to dashboard.
+        // This will catch email/password logins and also if a logged-in user visits the login page.
+        router.push("/dashboard");
+      }
+    });
+
+    // Cleanup subscription on unmount
+    return () => unsubscribe();
   }, [router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -49,7 +64,7 @@ export default function LoginPage() {
         await signUpWithEmail(email, password)
         toast.success("Account created successfully!")
       }
-      router.push("/dashboard")
+      // The onAuthStateChanged listener will handle the redirect.
     } catch (error: any) {
       toast.error(error.message || "Authentication failed")
     } finally {
