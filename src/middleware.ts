@@ -1,23 +1,35 @@
 // src/middleware.ts
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { authAdmin } from '@/lib/firebase-admin';
 
-export function middleware(request: NextRequest) {
-  const token = request.cookies.get('firebaseIdToken');
+async function verifySessionCookie(token: string) {
+  try {
+    await authAdmin.verifyIdToken(token);
+    return true;
+  } catch (error) {
+    return false;
+  }
+}
+
+export async function middleware(request: NextRequest) {
+  const sessionToken = request.cookies.get('__session')?.value;
   const { pathname } = request.nextUrl;
 
   const protectedRoutes = ['/dashboard', '/portfolio', '/trades', '/analytics'];
-  const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route));
+  const isProtectedRoute = protectedRoutes.some((route) => pathname.startsWith(route));
 
-  // If the user is trying to access a protected route without a token, redirect to login
-  if (!token && isProtectedRoute) {
-    const loginUrl = new URL('/login', request.url);
-    loginUrl.searchParams.set('redirect_to', pathname);
-    return NextResponse.redirect(loginUrl);
+  const isTokenValid = sessionToken ? await verifySessionCookie(sessionToken) : false;
+
+  if (isProtectedRoute) {
+    if (!isTokenValid) {
+      const loginUrl = new URL('/login', request.url);
+      loginUrl.searchParams.set('redirect_to', pathname);
+      return NextResponse.redirect(loginUrl);
+    }
   }
 
-  // If the user is logged in and tries to access the login page, redirect to dashboard
-  if (token && pathname === '/login') {
+  if (pathname === '/login' && isTokenValid) {
     const dashboardUrl = new URL('/dashboard', request.url);
     return NextResponse.redirect(dashboardUrl);
   }

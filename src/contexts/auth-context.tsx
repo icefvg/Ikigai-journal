@@ -31,7 +31,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (result) {
           toast.success("Successfully logged in with Google!")
           const token = await result.user.getIdToken();
-          document.cookie = `firebaseIdToken=${token}; path=/; SameSite=Lax; Secure`;
+          await fetch('/api/auth/session', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token }),
+          });
           // The onAuthStateChanged listener will handle setting the user
         }
       })
